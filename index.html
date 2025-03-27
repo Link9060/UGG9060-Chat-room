@@ -23,6 +23,7 @@
         const usersRef = ref(db, "onlineUsers");
 
         let username = localStorage.getItem("username") || "";
+        let recipient = "Everyone";
         
         document.addEventListener("DOMContentLoaded", () => {
             if (username) {
@@ -43,9 +44,14 @@
                 onlineUsersBox.innerHTML = "<strong>Online Users:</strong><br>";
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.key;
-                    onlineUsersBox.innerHTML += user + "<br>";
+                    onlineUsersBox.innerHTML += `<div onclick=\"selectRecipient('${user}')\">${user}</div>`;
                 });
             });
+        }
+
+        function selectRecipient(user) {
+            recipient = user;
+            document.getElementById("selected-recipient").innerText = `Messaging: ${recipient}`;
         }
 
         updateOnlineUsers();
@@ -64,7 +70,7 @@
             if (username === "" || message === "") return;
             localStorage.setItem("username", username);
             setUserOnline(username);
-            push(messagesRef, { username: username, text: message, timestamp: Date.now() }).then(() => {
+            push(messagesRef, { username: username, text: message, recipient: recipient, timestamp: Date.now() }).then(() => {
                 enforceMessageLimit();
             });
             messageInput.value = "";
@@ -87,9 +93,11 @@
             chatBox.innerHTML = "";
             snapshot.forEach((childSnapshot) => {
                 const data = childSnapshot.val();
-                const msgElement = document.createElement("p");
-                msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text} <small>(${new Date(data.timestamp).toLocaleTimeString()})</small>`;
-                chatBox.appendChild(msgElement);
+                if (data.recipient === "Everyone" || data.recipient === username || data.username === username) {
+                    const msgElement = document.createElement("p");
+                    msgElement.innerHTML = `<strong>${data.username} to ${data.recipient}:</strong> ${data.text} <small>(${new Date(data.timestamp).toLocaleTimeString()})</small>`;
+                    chatBox.appendChild(msgElement);
+                }
             });
             chatBox.scrollTop = chatBox.scrollHeight;
             if (document.hidden) {
@@ -111,6 +119,7 @@
     <div id="chat-container">
         <input type="text" id="username" placeholder="Enter your name">
         <div id="online-users"><strong>Online Users:</strong></div>
+        <div id="selected-recipient">Messaging: Everyone</div>
         <div id="chat-box"></div>
         <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key === 'Enter' && this.value.trim() !== '') sendMessage();">
         <button onclick="sendMessage()">Send</button>
