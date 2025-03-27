@@ -57,6 +57,7 @@
         }
 
         function openChatTab(user) {
+            console.log(`Opening chat tab for: ${user}`);
             if (!chatTabs.has(user)) {
                 chatTabs.set(user, []);
                 const tabContainer = document.getElementById("chat-tabs");
@@ -70,6 +71,7 @@
         }
 
         function switchChatTab(user) {
+            console.log(`Switching to chat tab: ${user}`);
             activeChat = user;
             document.getElementById("selected-recipient").innerText = `Messaging: ${user}`;
             document.querySelectorAll(".chat-tab").forEach(tab => {
