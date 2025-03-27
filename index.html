@@ -50,14 +50,14 @@
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.key;
                     if (user !== username) {
-                        usersBox.innerHTML += `<button class='user-button' onclick="openChatTab('${user}')">${user}</button>`;
+                        usersBox.innerHTML += `<button class='user-button' id="user-${user}" onclick="openChatTab('${user}')">${user}</button>`;
                     }
                 });
             });
         }
 
         function openChatTab(user) {
-            console.log(`Clicked on user: ${user}`);  // Debugging line
+            console.log(`Opening chat for: ${user}`); // Debugging
             if (!chatTabs.has(user)) {
                 chatTabs.set(user, []);
                 const tabContainer = document.getElementById("chat-tabs");
@@ -66,13 +66,12 @@
                 tab.classList.add("chat-tab");
                 tab.onclick = () => switchChatTab(user);
                 tabContainer.appendChild(tab);
-                console.log(`Created new tab for: ${user}`);  // Debugging line
             }
             switchChatTab(user);
         }
 
         function switchChatTab(user) {
-            console.log(`Switching to chat tab: ${user}`);  // Debugging line
+            console.log(`Switching to chat tab: ${user}`); // Debugging
             activeChat = user;
             document.getElementById("selected-recipient").innerText = `Messaging: ${user}`;
             document.querySelectorAll(".chat-tab").forEach(tab => {
