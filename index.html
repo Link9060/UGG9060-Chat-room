@@ -24,12 +24,18 @@
 
         let username = localStorage.getItem("username") || "";
         let recipient = "Everyone";
+        let sentMessageColor = "#9b2d5c"; // Default color for sent messages (violet)
+        let receivedMessageColor = "#00FFFF"; // Default color for received messages (cyan)
         
         document.addEventListener("DOMContentLoaded", () => {
             if (username) {
                 document.getElementById("username").value = username;
                 setUserOnline(username);
             }
+
+            // Set color pickers to current colors
+            document.getElementById("sent-color-picker").value = sentMessageColor;
+            document.getElementById("received-color-picker").value = receivedMessageColor;
         });
 
         function setUserOnline(name) {
@@ -81,14 +87,30 @@
             chatBox.innerHTML = "";
             snapshot.forEach((childSnapshot) => {
                 const data = childSnapshot.val();
+                const messageElement = document.createElement("p");
+                
                 if (data.recipient === "Everyone" || data.recipient === username || data.username === username) {
-                    const msgElement = document.createElement("p");
-                    msgElement.innerHTML = `<strong>${data.username} to ${data.recipient}:</strong> ${data.text}`;
-                    chatBox.appendChild(msgElement);
+                    if (data.username === username) {
+                        messageElement.innerHTML = `<strong style="color: ${sentMessageColor};">${data.username} to ${data.recipient}:</strong> <span style="color: ${sentMessageColor};">${data.text}</span>`;
+                    } else {
+                        messageElement.innerHTML = `<strong style="color: ${receivedMessageColor};">${data.username} to ${data.recipient}:</strong> <span style="color: ${receivedMessageColor};">${data.text}</span>`;
+                    }
+                    chatBox.appendChild(messageElement);
                 }
             });
             chatBox.scrollTop = chatBox.scrollHeight;
         });
+
+        // Change color for sent messages
+        document.getElementById("sent-color-picker").addEventListener("input", (event) => {
+            sentMessageColor = event.target.value;
+        });
+
+        // Change color for received messages
+        document.getElementById("received-color-picker").addEventListener("input", (event) => {
+            receivedMessageColor = event.target.value;
+        });
+
     </script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a1a2e; color: white; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; flex-direction: column; height: 100vh; }
@@ -101,6 +123,9 @@
         .user-button { display: block; width: 100%; margin-top: 5px; padding: 10px; background: #0f3460; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
         .user-button:hover { background: #e94560; }
         button { padding: 10px 20px; margin-top: 10px; background: #9b2d5c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
+        .color-picker-container { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
+        .color-picker-container label { color: white; font-size: 1.2em; margin-bottom: 10px; }
+        .color-picker-container input { padding: 5px; margin: 5px 0; }
     </style>
 </head>
 <body>
@@ -115,6 +140,14 @@
             <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key === 'Enter' && this.value.trim() !== '') sendMessage();">
             <button onclick="sendMessage()">Send</button>
         </div>
+    </div>
+
+    <!-- Color pickers for message colors -->
+    <div class="color-picker-container">
+        <label for="sent-color-picker">Sent Message Color:</label>
+        <input type="color" id="sent-color-picker" value="#9b2d5c">
+        <label for="received-color-picker">Received Message Color:</label>
+        <input type="color" id="received-color-picker" value="#00FFFF">
     </div>
 </body>
 </html>
