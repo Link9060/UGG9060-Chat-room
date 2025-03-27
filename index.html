@@ -78,7 +78,14 @@
             if (username === "" || message === "") return;
             localStorage.setItem("username", username);
             setUserOnline(username);
-            push(messagesRef, { username: username, text: message, recipient: recipient, timestamp: Date.now() });
+            push(messagesRef, { 
+                username: username, 
+                text: message, 
+                recipient: recipient, 
+                timestamp: Date.now(),
+                sentColor: sentMessageColor, 
+                receivedColor: receivedMessageColor 
+            });
             messageInput.value = "";
         };
 
@@ -90,11 +97,8 @@
                 const messageElement = document.createElement("p");
                 
                 if (data.recipient === "Everyone" || data.recipient === username || data.username === username) {
-                    if (data.username === username) {
-                        messageElement.innerHTML = `<strong style="color: ${sentMessageColor};">${data.username} to ${data.recipient}:</strong> <span style="color: ${sentMessageColor};">${data.text}</span>`;
-                    } else {
-                        messageElement.innerHTML = `<strong style="color: ${receivedMessageColor};">${data.username} to ${data.recipient}:</strong> <span style="color: ${receivedMessageColor};">${data.text}</span>`;
-                    }
+                    let messageColor = (data.username === username) ? data.sentColor : data.receivedColor;
+                    messageElement.innerHTML = `<strong style="color: ${messageColor};">${data.username} to ${data.recipient}:</strong> <span style="color: ${messageColor};">${data.text}</span>`;
                     chatBox.appendChild(messageElement);
                 }
             });
@@ -146,12 +150,4 @@
     <div class="color-picker-container">
         <div>
             <label for="sent-color-picker">Sent Color:</label>
-            <input type="color" id="sent-color-picker" value="#9b2d5c">
-        </div>
-        <div>
-            <label for="received-color-picker">Received Color:</label>
-            <input type="color" id="received-color-picker" value="#00FFFF">
-        </div>
-    </div>
-</body>
-</html>
+            <input type="color" id="sent-color-picker"
