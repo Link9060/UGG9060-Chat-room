@@ -25,7 +25,8 @@
         const usersRef = ref(db, "onlineUsers");
 
         let username = localStorage.getItem("username") || "";
-        let recipient = "Everyone";
+        let activeChat = "Everyone";
+        let chatTabs = new Set(["Everyone"]);
 
         document.addEventListener("DOMContentLoaded", () => {
             if (username) {
@@ -33,18 +34,7 @@
                 setUserOnline(username);
             }
             updateOnlineUsers();
-
-            // Allow pressing Enter to send message
-            document.getElementById("message").addEventListener("keypress", function (event) {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                    sendMessage();
-                }
-            });
-
-            // Restore last selected color choices
-            document.getElementById("sentColor").value = localStorage.getItem("sentColor") || "#ffffff";
-            document.getElementById("receivedColor").value = localStorage.getItem("receivedColor") || "#ffffff";
+            loadMessages();
         });
 
         function setUserOnline(name) {
@@ -55,75 +45,81 @@
 
         function updateOnlineUsers() {
             onValue(usersRef, (snapshot) => {
-                const onlineUsersBox = document.getElementById("online-users");
-                onlineUsersBox.innerHTML = "<strong>Online Users:</strong><br>";
+                const usersBox = document.getElementById("online-users");
+                usersBox.innerHTML = "<strong>Online Users:</strong><br>";
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.key;
-                    onlineUsersBox.innerHTML += `<button class='user-button' id='user-${user}' onclick="openPrivateChat('${user}')">${user}</button>`;
+                    if (user !== username) {
+                        usersBox.innerHTML += `<button class='user-button' id='user-${user}' onclick="openChatTab('${user}')">${user}</button>`;
+                    }
                 });
             });
         }
 
-        function openPrivateChat(user) {
-            recipient = user;
-            document.getElementById("selected-recipient").innerText = `Messaging: ${user}`;
-            highlightSelectedUser(user);
+        function openChatTab(user) {
+            if (!chatTabs.has(user)) {
+                chatTabs.add(user);
+                const tabContainer = document.getElementById("chat-tabs");
+                const tab = document.createElement("button");
+                tab.innerText = user;
+                tab.classList.add("chat-tab");
+                tab.onclick = () => switchChatTab(user);
+                tabContainer.appendChild(tab);
+            }
+            switchChatTab(user);
         }
 
-        function highlightSelectedUser(user) {
-            document.querySelectorAll('.user-button').forEach(button => button.classList.remove('highlighted'));
-            const selectedButton = document.getElementById(`user-${user}`);
-            if (selectedButton) {
-                selectedButton.classList.add('highlighted');
-            }
+        function switchChatTab(user) {
+            activeChat = user;
+            document.getElementById("selected-recipient").innerText = `Messaging: ${user}`;
+            document.querySelectorAll(".chat-tab").forEach(tab => tab.classList.remove("active"));
+            document.querySelector(`.chat-tab:contains('${user}')`)?.classList.add("active");
+            loadMessages();
         }
 
         window.sendMessage = function () {
             username = document.getElementById("username").value.trim();
             const messageInput = document.getElementById("message");
             const message = messageInput.value.trim();
-
             if (username === "" || message === "") return;
+
             localStorage.setItem("username", username);
             setUserOnline(username);
-            push(messagesRef, { username: username, text: message, recipient: recipient, timestamp: Date.now() });
+            push(messagesRef, { username: username, text: message, recipient: activeChat, timestamp: Date.now() });
+
             messageInput.value = "";
         };
 
-        onValue(messagesRef, (snapshot) => {
-            const chatBox = document.getElementById("chat-box");
-            chatBox.innerHTML = "";
-            snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                if (data.recipient === "Everyone" || data.recipient === username || data.username === username) {
-                    const msgElement = document.createElement("p");
-                    msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text}`;
-                    msgElement.style.color = data.username === username ? document.getElementById("sentColor").value : document.getElementById("receivedColor").value;
-                    chatBox.appendChild(msgElement);
-                }
+        function loadMessages() {
+            onValue(messagesRef, (snapshot) => {
+                const chatBox = document.getElementById("chat-box");
+                chatBox.innerHTML = "";
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    if (data.recipient === activeChat || (data.recipient === "Everyone" && activeChat === "Everyone") || data.username === username) {
+                        const msgElement = document.createElement("p");
+                        msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text}`;
+                        chatBox.appendChild(msgElement);
+                    }
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
             });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
-
-        function updateTextColor() {
-            localStorage.setItem("sentColor", document.getElementById("sentColor").value);
-            localStorage.setItem("receivedColor", document.getElementById("receivedColor").value);
         }
+
     </script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a1a2e; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; height: 100vh; }
         h1 { color: #9b2d5c; }
         #chat-container { display: flex; width: 80%; height: 80vh; background: #16213e; padding: 20px; border-radius: 10px; }
-        #online-users { width: 30%; padding: 15px; background: #0f3460; border-radius: 5px; overflow-y: auto; color: white; font-size: 1.2em; margin-right: 15px; }
-        #chat-area { width: 70%; display: flex; flex-direction: column; }
-        .chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; background: #0f3460; border-radius: 5px; font-size: 1.2em; max-height: 60vh; }
-        #username, #message { width: calc(100% - 20px); padding: 10px; margin-top: 10px; border-radius: 5px; border: 2px solid cyan; background: #1a1a2e; color: white; font-size: 1.2em; }
-        .user-button { display: block; width: 100%; margin-top: 5px; padding: 10px; background: #0f3460; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
-        .user-button:hover, .highlighted { background-color: #9b2d5c; }
-        button { padding: 10px 20px; background: #9b2d5c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
-        #color-controls { margin-top: 10px; }
-        .color-picker { display: flex; align-items: center; margin-bottom: 10px; }
-        .color-picker label { margin-right: 10px; }
+        #online-users { width: 20%; padding: 15px; background: #0f3460; border-radius: 5px; overflow-y: auto; }
+        #chat-area { width: 80%; display: flex; flex-direction: column; }
+        .chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; background: #0f3460; border-radius: 5px; max-height: 60vh; }
+        #username, #message { width: calc(100% - 20px); padding: 10px; border-radius: 5px; background: #1a1a2e; color: white; }
+        .user-button, .chat-tab { padding: 10px; background: #0f3460; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .chat-tab.active { background: #9b2d5c; }
+        .user-button:hover, .chat-tab:hover { background-color: #9b2d5c; }
+        button { padding: 10px 20px; background: #9b2d5c; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #chat-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -133,19 +129,12 @@
         <div id="chat-area">
             <input type="text" id="username" placeholder="Enter your name">
             <div id="selected-recipient">Messaging: Everyone</div>
+            <div id="chat-tabs">
+                <button class="chat-tab active" onclick="switchChatTab('Everyone')">Everyone</button>
+            </div>
             <div id="chat-box" class="chat-box"></div>
             <input type="text" id="message">
             <button onclick="sendMessage()">Send</button>
-            <div id="color-controls">
-                <div class="color-picker">
-                    <label>Sent Text:</label>
-                    <input type="color" id="sentColor" onchange="updateTextColor()">
-                </div>
-                <div class="color-picker">
-                    <label>Received Text:</label>
-                    <input type="color" id="receivedColor" onchange="updateTextColor()">
-                </div>
-            </div>
         </div>
     </div>
 </body>
