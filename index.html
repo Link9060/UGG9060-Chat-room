@@ -26,7 +26,7 @@
 
         let username = localStorage.getItem("username") || "";
         let activeChat = "Everyone";
-        let chatTabs = new Set(["Everyone"]);
+        let chatTabs = new Map();
 
         document.addEventListener("DOMContentLoaded", () => {
             if (username) {
@@ -58,7 +58,7 @@
 
         function openChatTab(user) {
             if (!chatTabs.has(user)) {
-                chatTabs.add(user);
+                chatTabs.set(user, []);
                 const tabContainer = document.getElementById("chat-tabs");
                 const tab = document.createElement("button");
                 tab.innerText = user;
@@ -109,7 +109,6 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
             });
         }
-
     </script>
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a1a2e; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; height: 100vh; }
