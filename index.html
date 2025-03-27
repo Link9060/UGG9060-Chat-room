@@ -6,7 +6,7 @@
     <title>Galaxy Networks Chat Room</title>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, set, remove, onDisconnect, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, push, onValue, set, onDisconnect, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCW_N1Uvyy5yGUyajKsuAC6R4VqAaBPtEQ",
@@ -26,7 +26,7 @@
 
         let username = localStorage.getItem("username") || "";
         let recipient = "Everyone";
-        
+
         document.addEventListener("DOMContentLoaded", () => {
             if (username) {
                 document.getElementById("username").value = username;
@@ -60,24 +60,27 @@
 
         function addNewTab(user) {
             const tabContainer = document.getElementById("chat-tabs");
-            const tab = document.createElement("div");
-            tab.classList.add("chat-tab");
-            tab.innerHTML = `
-                <span>Private Chat with ${user}</span>
-                <button onclick="closeTab('${user}')">X</button>
-            `;
-            tabContainer.appendChild(tab);
+            if (!document.getElementById(`tab-${user}`)) {
+                const tab = document.createElement("div");
+                tab.classList.add("chat-tab");
+                tab.id = `tab-${user}`;
+                tab.innerHTML = `
+                    <span>Private Chat with ${user}</span>
+                    <button onclick="closeTab('${user}')">X</button>
+                `;
+                tabContainer.appendChild(tab);
 
-            const chatBox = document.createElement("div");
-            chatBox.id = `chat-box-${user}`;
-            chatBox.classList.add("chat-box");
-            document.getElementById("chat-area").appendChild(chatBox);
+                const chatBox = document.createElement("div");
+                chatBox.id = `chat-box-${user}`;
+                chatBox.classList.add("chat-box");
+                document.getElementById("chat-area").appendChild(chatBox);
+            }
         }
 
         function closeTab(user) {
             const tabContainer = document.getElementById("chat-tabs");
             const chatBox = document.getElementById(`chat-box-${user}`);
-            const tab = document.querySelector(`.chat-tab span:contains('Private Chat with ${user}')`).parentElement;
+            const tab = document.getElementById(`tab-${user}`);
 
             tabContainer.removeChild(tab);
             chatBox.parentNode.removeChild(chatBox);
@@ -94,6 +97,18 @@
             const selectedChatBox = document.getElementById(`chat-box-${user}`) || document.getElementById("chat-box-Everyone");
             selectedChatBox.style.display = "block";
             document.getElementById("selected-recipient").innerText = `Messaging: ${user}`;
+            highlightSelectedUser(user);
+        }
+
+        function highlightSelectedUser(user) {
+            // Remove highlight from all users
+            document.querySelectorAll('.user-button').forEach(button => button.classList.remove('highlighted'));
+            // Highlight the selected user
+            document.querySelectorAll('.user-button').forEach(button => {
+                if (button.innerText === user) {
+                    button.classList.add('highlighted');
+                }
+            });
         }
 
         window.sendMessage = function () {
@@ -134,6 +149,7 @@
         #username, #message { width: calc(100% - 20px); padding: 10px; margin-top: 10px; border-radius: 5px; border: 2px solid cyan; background: #1a1a2e; color: white; font-size: 1.2em; }
         .user-button { display: block; width: 100%; margin-top: 5px; padding: 10px; background: #0f3460; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
         .user-button:hover { background: #e94560; }
+        .highlighted { background-color: #9b2d5c; }
         button { padding: 10px 20px; margin-top: 10px; background: #9b2d5c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
     </style>
 </head>
@@ -147,7 +163,8 @@
             <div id="selected-recipient">Messaging: Everyone</div>
             <div id="chat-tabs"></div>
             <div id="chat-box-Everyone" class="chat-box"></div>
-            <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key === 'Enter' && this.value.trim() !== '') sendMessage();">
+            <div id="chat-box" class="chat-box" style="display:none"></div>
+            <input type="text" id="message" placeholder="Type a message">
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
