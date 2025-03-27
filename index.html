@@ -4,7 +4,7 @@
     <title>Firebase Chat</title>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, set, remove, onDisconnect, get, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, push, onValue, set, remove, onDisconnect, get, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCW_N1Uvyy5yGUyajKsuAC6R4VqAaBPtEQ",
@@ -64,12 +64,6 @@
 
         updateOnlineUsers();
 
-        if (Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
-
-        const messageSound = new Audio("https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3");
-
         window.sendMessage = function () {
             username = document.getElementById("username").value.trim();
             const messageInput = document.getElementById("message");
@@ -78,23 +72,9 @@
             if (username === "" || message === "") return;
             localStorage.setItem("username", username);
             setUserOnline(username);
-            push(messagesRef, { username: username, text: message, recipient: recipient, timestamp: Date.now() }).then(() => {
-                enforceMessageLimit();
-            });
+            push(messagesRef, { username: username, text: message, recipient: recipient, timestamp: Date.now() });
             messageInput.value = "";
         };
-
-        function enforceMessageLimit() {
-            get(messagesRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const messages = snapshot.val();
-                    const keys = Object.keys(messages);
-                    if (keys.length > 100) {
-                        remove(ref(db, `messages/${keys[0]}`));
-                    }
-                }
-            });
-        }
 
         onValue(query(messagesRef, limitToLast(100)), (snapshot) => {
             const chatBox = document.getElementById("chat-box");
@@ -103,33 +83,29 @@
                 const data = childSnapshot.val();
                 if (data.recipient === "Everyone" || data.recipient === username || data.username === username) {
                     const msgElement = document.createElement("p");
-                    msgElement.innerHTML = `<strong>${data.username} to ${data.recipient}:</strong> ${data.text} <small>(${new Date(data.timestamp).toLocaleTimeString()})</small>`;
+                    msgElement.innerHTML = `<strong>${data.username} to ${data.recipient}:</strong> ${data.text}`;
                     chatBox.appendChild(msgElement);
                 }
             });
             chatBox.scrollTop = chatBox.scrollHeight;
-            if (document.hidden) {
-                messageSound.play();
-            }
         });
     </script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #1a1a2e; color: white; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; justify-content: center; align-items: center; }
-        #chat-container { width: 80%; height: 80vh; display: flex; justify-content: space-between; background: #16213e; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 20px #0f3460; }
-        #chat-box { flex-grow: 1; width: 60%; overflow-y: auto; border: 2px solid #0f3460; padding: 15px; background: #0f3460; color: white; border-radius: 5px; font-size: 1.2em; }
-        #online-users { width: 35%; padding: 15px; background: #16213e; border-radius: 5px; border: 2px solid #0f3460; overflow-y: auto; color: white; font-size: 1.2em; }
-        #username, #message { width: 100%; padding: 15px; margin-top: 10px; border-radius: 5px; border: 2px solid #0f3460; background: #1a1a2e; color: white; font-size: 1.2em; }
+        body { font-family: Arial, sans-serif; background-color: #1a1a2e; color: white; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #chat-container { display: flex; width: 80%; height: 80vh; background: #16213e; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 20px #0f3460; }
+        #online-users { width: 25%; padding: 15px; background: #0f3460; border-radius: 5px; overflow-y: auto; color: white; font-size: 1em; }
+        #chat-area { width: 75%; display: flex; flex-direction: column; }
+        #chat-box { flex-grow: 1; overflow-y: auto; border: 2px solid #0f3460; padding: 15px; background: #0f3460; border-radius: 5px; font-size: 1.2em; }
+        #username, #message { width: calc(100% - 20px); padding: 10px; margin-top: 10px; border-radius: 5px; border: 2px solid #0f3460; background: #1a1a2e; color: white; font-size: 1.2em; }
         .user-button { display: block; width: 100%; margin-top: 5px; padding: 10px; background: #0f3460; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
         .user-button:hover { background: #e94560; }
-        button { padding: 15px 20px; margin-top: 10px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
-        button:hover { background: #ff2e63; }
+        button { padding: 10px 20px; margin-top: 10px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
     </style>
 </head>
 <body>
-    <h2>Real-Time Chat</h2>
     <div id="chat-container">
         <div id="online-users"><strong>Online Users:</strong></div>
-        <div>
+        <div id="chat-area">
             <input type="text" id="username" placeholder="Enter your name">
             <div id="selected-recipient">Messaging: Everyone</div>
             <div id="chat-box"></div>
