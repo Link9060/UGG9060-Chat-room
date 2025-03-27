@@ -47,7 +47,7 @@
                 onlineUsersBox.innerHTML = "<strong>Online Users:</strong><br>";
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.key;
-                    onlineUsersBox.innerHTML += `<button class='user-button' onclick="openPrivateChat('${user}')">${user}</button>`;
+                    onlineUsersBox.innerHTML += `<button class='user-button' id='user-${user}' onclick="openPrivateChat('${user}')">${user}</button>`;
                 });
             });
         }
@@ -65,7 +65,7 @@
                 tab.classList.add("chat-tab");
                 tab.id = `tab-${user}`;
                 tab.innerHTML = `
-                    <span>Private Chat with ${user}</span>
+                    <span>Chat with ${user}</span>
                     <button onclick="closeTab('${user}')">X</button>
                 `;
                 tabContainer.appendChild(tab);
@@ -73,17 +73,14 @@
                 const chatBox = document.createElement("div");
                 chatBox.id = `chat-box-${user}`;
                 chatBox.classList.add("chat-box");
+                chatBox.style.display = "none";
                 document.getElementById("chat-area").appendChild(chatBox);
             }
         }
 
         function closeTab(user) {
-            const tabContainer = document.getElementById("chat-tabs");
-            const chatBox = document.getElementById(`chat-box-${user}`);
-            const tab = document.getElementById(`tab-${user}`);
-
-            tabContainer.removeChild(tab);
-            chatBox.parentNode.removeChild(chatBox);
+            document.getElementById(`tab-${user}`).remove();
+            document.getElementById(`chat-box-${user}`).remove();
             if (recipient === user) {
                 recipient = "Everyone";
                 switchTab("Everyone");
@@ -97,18 +94,16 @@
             const selectedChatBox = document.getElementById(`chat-box-${user}`) || document.getElementById("chat-box-Everyone");
             selectedChatBox.style.display = "block";
             document.getElementById("selected-recipient").innerText = `Messaging: ${user}`;
+
             highlightSelectedUser(user);
         }
 
         function highlightSelectedUser(user) {
-            // Remove highlight from all users
             document.querySelectorAll('.user-button').forEach(button => button.classList.remove('highlighted'));
-            // Highlight the selected user
-            document.querySelectorAll('.user-button').forEach(button => {
-                if (button.innerText === user) {
-                    button.classList.add('highlighted');
-                }
-            });
+            const selectedButton = document.getElementById(`user-${user}`);
+            if (selectedButton) {
+                selectedButton.classList.add('highlighted');
+            }
         }
 
         window.sendMessage = function () {
@@ -138,32 +133,31 @@
         });
     </script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #1a1a2e; color: white; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; flex-direction: column; height: 100vh; }
-        h1 { margin-bottom: 10px; }
-        #chat-container { display: flex; width: 80%; height: 80vh; background: #16213e; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 20px cyan; }
-        #online-users { width: 30%; padding: 15px; background: #0f3460; border-radius: 5px; overflow-y: auto; color: white; font-size: 1.2em; margin-right: 15px; border: 2px solid cyan; }
-        #chat-area { width: 70%; display: flex; flex-direction: column; border: 2px solid cyan; padding: 10px; border-radius: 5px; }
+        body { font-family: Arial, sans-serif; background-color: #1a1a2e; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; height: 100vh; }
+        h1 { color: #9b2d5c; }
+        #chat-container { display: flex; width: 80%; height: 80vh; background: #16213e; padding: 20px; border-radius: 10px; }
+        #online-users { width: 30%; padding: 15px; background: #0f3460; border-radius: 5px; overflow-y: auto; color: white; font-size: 1.2em; margin-right: 15px; }
+        #chat-area { width: 70%; display: flex; flex-direction: column; }
         #chat-tabs { display: flex; margin-bottom: 10px; flex-wrap: wrap; }
-        .chat-tab { margin-right: 10px; padding: 10px; background: #0f3460; color: white; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-        #chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; background: #0f3460; border-radius: 5px; font-size: 1.2em; border: 2px solid cyan; max-height: 60vh; overflow: auto; }
+        .chat-tab { margin-right: 10px; padding: 10px; background: #0f3460; color: white; border-radius: 5px; cursor: pointer; display: flex; align-items: center; }
+        .chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; background: #0f3460; border-radius: 5px; font-size: 1.2em; max-height: 60vh; display: none; }
+        #chat-box-Everyone { display: block; }
         #username, #message { width: calc(100% - 20px); padding: 10px; margin-top: 10px; border-radius: 5px; border: 2px solid cyan; background: #1a1a2e; color: white; font-size: 1.2em; }
         .user-button { display: block; width: 100%; margin-top: 5px; padding: 10px; background: #0f3460; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
-        .user-button:hover { background: #e94560; }
-        .highlighted { background-color: #9b2d5c; }
-        button { padding: 10px 20px; margin-top: 10px; background: #9b2d5c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
+        .user-button:hover, .highlighted { background-color: #9b2d5c; }
+        button { padding: 10px 20px; background: #9b2d5c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
     </style>
 </head>
 <body>
     <h1>Galaxy Networks Chat Room</h1>
-    <p>Please use your real name</p>
     <div id="chat-container">
-        <div id="online-users"><strong>Online Users:</strong></div>
+        <div id="online-users"></div>
         <div id="chat-area">
             <input type="text" id="username" placeholder="Enter your name">
             <div id="selected-recipient">Messaging: Everyone</div>
             <div id="chat-tabs"></div>
-            <div id="chat-box-Everyone" class="chat-box" style="display:block;"></div>
-            <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key === 'Enter' && this.value.trim() !== '') sendMessage();">
+            <div id="chat-box-Everyone" class="chat-box"></div>
+            <input type="text" id="message">
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
