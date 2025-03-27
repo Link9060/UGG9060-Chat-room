@@ -100,7 +100,7 @@
                 chatBox.innerHTML = "";
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
-                    if ((data.recipient === activeChat || data.recipient === "Everyone" || data.username === username) && (activeChat === "Everyone" || data.recipient === username || data.username === activeChat)) {
+                    if (data.recipient === activeChat || data.recipient === "Everyone" || data.username === username) {
                         const msgElement = document.createElement("p");
                         msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text}`;
                         chatBox.appendChild(msgElement);
