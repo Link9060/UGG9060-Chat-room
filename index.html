@@ -50,7 +50,7 @@
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.key;
                     if (user !== username) {
-                        usersBox.innerHTML += `<button class='user-button' id='user-${user}' onclick="openChatTab('${user}')">${user}</button>`;
+                        usersBox.innerHTML += `<button class='user-button' onclick="openChatTab('${user}')">${user}</button>`;
                     }
                 });
             });
@@ -72,8 +72,12 @@
         function switchChatTab(user) {
             activeChat = user;
             document.getElementById("selected-recipient").innerText = `Messaging: ${user}`;
-            document.querySelectorAll(".chat-tab").forEach(tab => tab.classList.remove("active"));
-            document.querySelector(`.chat-tab:contains('${user}')`)?.classList.add("active");
+            document.querySelectorAll(".chat-tab").forEach(tab => {
+                tab.classList.remove("active");
+                if (tab.innerText === user) {
+                    tab.classList.add("active");
+                }
+            });
             loadMessages();
         }
 
