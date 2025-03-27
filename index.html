@@ -55,6 +55,7 @@
         function openPrivateChat(user) {
             recipient = user;
             addNewTab(user);
+            switchTab(user);
         }
 
         function addNewTab(user) {
@@ -71,9 +72,6 @@
             chatBox.id = `chat-box-${user}`;
             chatBox.classList.add("chat-box");
             document.getElementById("chat-area").appendChild(chatBox);
-
-            // Show the chat box for the selected user
-            switchTab(user);
         }
 
         function closeTab(user) {
@@ -149,7 +147,6 @@
             <div id="selected-recipient">Messaging: Everyone</div>
             <div id="chat-tabs"></div>
             <div id="chat-box-Everyone" class="chat-box"></div>
-            <div id="chat-box"></div>
             <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key === 'Enter' && this.value.trim() !== '') sendMessage();">
             <button onclick="sendMessage()">Send</button>
         </div>
