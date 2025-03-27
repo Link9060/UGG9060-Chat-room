@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase Chat</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, set, remove, onDisconnect, get, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCW_N1Uvyy5yGUyajKsuAC6R4VqAaBPtEQ",
+            authDomain: "chat-room-ea3e2.firebaseapp.com",
+            databaseURL: "https://chat-room-ea3e2-default-rtdb.firebaseio.com",
+            projectId: "chat-room-ea3e2",
+            storageBucket: "chat-room-ea3e2.appspot.com",
+            messagingSenderId: "363596229339",
+            appId: "1:363596229339:web:183ce2fc0b0b0722f2bafe",
+            measurementId: "G-EM2V1S2D6L"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const messagesRef = ref(db, "messages");
+        const usersRef = ref(db, "onlineUsers");
+
+        let username = localStorage.getItem("username") || "";
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            if (username) {
+                document.getElementById("username").value = username;
+                setUserOnline(username);
+            }
+        });
+
+        function setUserOnline(name) {
+            const userRef = ref(db, `onlineUsers/${name}`);
+            set(userRef, true);
+            onDisconnect(userRef).remove();
+        }
+
+        function updateOnlineUsers() {
+            onValue(usersRef, (snapshot) => {
+                const onlineUsersBox = document.getElementById("online-users");
+                onlineUsersBox.innerHTML = "<strong>Online Users:</strong><br>";
+                snapshot.forEach((childSnapshot) => {
+                    const user = childSnapshot.key;
+                    onlineUsersBox.innerHTML += user + "<br>";
+                });
+            });
+        }
+
+        updateOnlineUsers();
+
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        const messageSound = new Audio("https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3");
+
+        window.sendMessage = function () {
+            username = document.getElementById("username").value.trim();
+            const messageInput = document.getElementById("message");
+            const message = messageInput.value.trim();
+
+            if (username === "" || message === "") return;
+            localStorage.setItem("username", username);
+            setUserOnline(username);
+            push(messagesRef, { username: username, text: message, timestamp: Date.now() }).then(() => {
+                enforceMessageLimit();
+            });
+            messageInput.value = "";
+        };
+
+        function enforceMessageLimit() {
+            get(messagesRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const messages = snapshot.val();
+                    const keys = Object.keys(messages);
+                    if (keys.length > 100) {
+                        remove(ref(db, `messages/${keys[0]}`));
+                    }
+                }
+            });
+        }
+
+        onValue(query(messagesRef, limitToLast(100)), (snapshot) => {
+            const chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML = "";
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+                const msgElement = document.createElement("p");
+                msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text} <small>(${new Date(data.timestamp).toLocaleTimeString()})</small>`;
+                chatBox.appendChild(msgElement);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+            if (document.hidden) {
+                messageSound.play();
+            }
+        });
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #1a1a2e; color: white; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; justify-content: center; align-items: center; }
+        #chat-container { width: 80%; height: 80vh; display: flex; flex-direction: column; justify-content: space-between; background: #16213e; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 20px #0f3460; }
+        #chat-box, #online-users { flex-grow: 1; overflow-y: auto; border: 2px solid #0f3460; padding: 15px; background: #0f3460; color: white; border-radius: 5px; font-size: 1.2em; }
+        #username, #message { width: 95%; padding: 15px; margin-top: 10px; border-radius: 5px; border: 2px solid #0f3460; background: #1a1a2e; color: white; font-size: 1.2em; }
+        button { padding: 15px 20px; margin-top: 10px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; }
+        button:hover { background: #ff2e63; }
+    </style>
+</head>
+<body>
+    <h2>Real-Time Chat</h2>
+    <div id="chat-container">
+        <input type="text" id="username" placeholder="Enter your name">
+        <div id="online-users"><strong>Online Users:</strong></div>
+        <div id="chat-box"></div>
+        <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key === 'Enter' && this.value.trim() !== '') sendMessage();">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</body>
+</html>
