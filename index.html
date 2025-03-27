@@ -78,6 +78,8 @@
             if (username === "" || message === "") return;
             localStorage.setItem("username", username);
             setUserOnline(username);
+
+            // Save the message with color attributes in Firebase
             push(messagesRef, { 
                 username: username, 
                 text: message, 
@@ -86,6 +88,7 @@
                 sentColor: sentMessageColor, 
                 receivedColor: receivedMessageColor 
             });
+
             messageInput.value = "";
         };
 
@@ -95,8 +98,9 @@
             snapshot.forEach((childSnapshot) => {
                 const data = childSnapshot.val();
                 const messageElement = document.createElement("p");
-                
+
                 if (data.recipient === "Everyone" || data.recipient === username || data.username === username) {
+                    // Use the correct color for sent and received messages
                     let messageColor = (data.username === username) ? data.sentColor : data.receivedColor;
                     messageElement.innerHTML = `<strong style="color: ${messageColor};">${data.username} to ${data.recipient}:</strong> <span style="color: ${messageColor};">${data.text}</span>`;
                     chatBox.appendChild(messageElement);
@@ -151,11 +155,4 @@
         <div>
             <label for="sent-color-picker">Sent Color:</label>
             <input type="color" id="sent-color-picker" value="#9b2d5c" />
-        </div>
-        <div>
-            <label for="received-color-picker">Received Color:</label>
-            <input type="color" id="received-color-picker" value="#00FFFF" />
-        </div>
-    </div>
-</body>
-</html>
+        </div
