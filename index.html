@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Room</title>
+    <title>Galaxy Networks Chat Room</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,12 +23,13 @@
 
         #chat-container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             width: 80%;
             height: 80vh;
             background: #16213e;
             padding: 20px;
             border-radius: 10px;
+            border: 3px solid cyan;
         }
 
         .chat-box {
@@ -38,6 +39,7 @@
             background: #0f3460;
             border-radius: 5px;
             max-height: 60vh;
+            border: 2px solid cyan;
         }
 
         #username, #message {
@@ -46,26 +48,43 @@
             border-radius: 5px;
             background: #1a1a2e;
             color: white;
+            border: 2px solid cyan;
         }
 
         button {
             padding: 10px 20px;
-            background: #9b2d5c;
+            background: #7b1fa2;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
         }
+
+        #online-users {
+            width: 200px;
+            background: #0f3460;
+            padding: 10px;
+            border-radius: 5px;
+            margin-left: 10px;
+            border: 2px solid cyan;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Chat Room</h1>
+    <h1>Galaxy Networks Chat Room</h1>
+    <p>Please use your real name</p>
     <div id="chat-container">
         <div id="chat-box" class="chat-box"></div>
-        <input type="text" id="username" placeholder="Enter your name">
-        <input type="text" id="message" placeholder="Type your message">
-        <button onclick="sendMessage()">Send</button>
+        <div>
+            <input type="text" id="username" placeholder="Enter your name">
+            <input type="text" id="message" placeholder="Type your message">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <div id="online-users">
+            <h3>Online Users</h3>
+            <ul id="user-list"></ul>
+        </div>
     </div>
 
     <script type="module">
@@ -86,13 +105,19 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const messagesRef = ref(db, "messages");
+        const usersRef = ref(db, "online-users");
+
+        const usernameInput = document.getElementById("username");
+        const chatBox = document.getElementById("chat-box");
+        const userList = document.getElementById("user-list");
 
         document.addEventListener("DOMContentLoaded", () => {
             loadMessages();
+            trackOnlineUsers();
         });
 
         function sendMessage() {
-            const username = document.getElementById("username").value.trim();
+            const username = usernameInput.value.trim();
             const messageInput = document.getElementById("message");
             const message = messageInput.value.trim();
             if (username === "" || message === "") return;
@@ -103,17 +128,34 @@
 
         function loadMessages() {
             onValue(messagesRef, (snapshot) => {
-                const chatBox = document.getElementById("chat-box");
                 chatBox.innerHTML = "";
-
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
                     const msgElement = document.createElement("p");
                     msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text}`;
                     chatBox.appendChild(msgElement);
                 });
-
                 chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
+        function trackOnlineUsers() {
+            const username = prompt("Enter your name:");
+            if (!username) return;
+            usernameInput.value = username;
+
+            const userRef = ref(db, `online-users/${username}`);
+            set(userRef, true);
+            onDisconnect(userRef).remove();
+
+            onValue(usersRef, (snapshot) => {
+                userList.innerHTML = "";
+                snapshot.forEach((childSnapshot) => {
+                    const user = childSnapshot.key;
+                    const userElement = document.createElement("li");
+                    userElement.textContent = user;
+                    userList.appendChild(userElement);
+                });
             });
         }
     </script>
