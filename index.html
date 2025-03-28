@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Room</title>
+    <title>Interactive Chat Room - Connect and Chat with Users</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -60,6 +60,13 @@
             border-radius: 5px;
             background: #1a1a2e;
             color: white;
+            border: 2px solid transparent;
+            transition: border 0.3s ease;
+        }
+
+        #username:focus, #message:focus {
+            border-color: #00BFFF; /* Blue outline when focused */
+            outline: none;
         }
 
         .user-button, .chat-tab {
@@ -113,7 +120,7 @@
 </head>
 <body>
 
-    <h1>Chat Room</h1>
+    <h1>Interactive Chat Room - Connect and Chat with Users</h1>
 
     <button id="everyone-tab" class="chat-tab active">Everyone</button>
     <div id="chat-tabs"></div>
