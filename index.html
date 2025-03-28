@@ -23,26 +23,12 @@
 
         #chat-container {
             display: flex;
+            flex-direction: column;
             width: 80%;
             height: 80vh;
             background: #16213e;
             padding: 20px;
             border-radius: 10px;
-        }
-
-        #online-users {
-            width: 20%;
-            padding: 15px;
-            background: #0f3460;
-            border-radius: 5px;
-            overflow-y: auto;
-        }
-
-        #chat-area {
-            width: 80%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
         }
 
         .chat-box {
@@ -62,24 +48,6 @@
             color: white;
         }
 
-        .user-button, .chat-tab {
-            padding: 10px;
-            background: #0f3460;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 5px;
-        }
-
-        .chat-tab.active {
-            background: #9b2d5c;
-        }
-
-        .user-button:hover, .chat-tab:hover {
-            background-color: #9b2d5c;
-        }
-
         button {
             padding: 10px 20px;
             background: #9b2d5c;
@@ -88,42 +56,16 @@
             border-radius: 5px;
             cursor: pointer;
         }
-
-        #chat-tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-
-        #message-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
 
     <h1>Chat Room</h1>
-
-    <button id="everyone-tab" class="chat-tab active">Everyone</button>
-    <div id="chat-tabs"></div>
-
     <div id="chat-container">
-        <div id="online-users">
-            <strong>Online Users:</strong><br>
-        </div>
-
-        <div id="chat-area">
-            <div id="chat-box" class="chat-box"></div>
-
-            <div id="message-container">
-                <input type="text" id="username" placeholder="Enter your name">
-                <input type="text" id="message" placeholder="Type your message">
-                <button onclick="sendMessage()">Send</button>
-            </div>
-        </div>
+        <div id="chat-box" class="chat-box"></div>
+        <input type="text" id="username" placeholder="Enter your name">
+        <input type="text" id="message" placeholder="Type your message">
+        <button onclick="sendMessage()">Send</button>
     </div>
 
     <script type="module">
@@ -144,85 +86,20 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const messagesRef = ref(db, "messages");
-        const usersRef = ref(db, "onlineUsers");
-
-        let username = localStorage.getItem("username") || "";
-        let activeChat = "Everyone";
-        let chatTabs = new Map();
 
         document.addEventListener("DOMContentLoaded", () => {
-            if (username) {
-                document.getElementById("username").value = username;
-                setUserOnline(username);
-            }
-            updateOnlineUsers();
             loadMessages();
         });
 
-        function setUserOnline(name) {
-            const userRef = ref(db, `onlineUsers/${name}`);
-            set(userRef, true);
-            onDisconnect(userRef).remove();
-        }
-
-        function updateOnlineUsers() {
-            onValue(usersRef, (snapshot) => {
-                const usersBox = document.getElementById("online-users");
-                usersBox.innerHTML = "<strong>Online Users:</strong><br>";
-
-                snapshot.forEach((childSnapshot) => {
-                    const user = childSnapshot.key;
-                    if (user !== username) {
-                        const userButton = document.createElement("button");
-                        userButton.classList.add("user-button");
-                        userButton.innerText = user;
-                        userButton.addEventListener("click", () => openChatTab(user));
-                        usersBox.appendChild(userButton);
-                    }
-                });
-            });
-        }
-
-        function openChatTab(user) {
-            if (!chatTabs.has(user)) {
-                chatTabs.set(user, []);
-                const tabContainer = document.getElementById("chat-tabs");
-
-                const tab = document.createElement("button");
-                tab.innerText = user;
-                tab.classList.add("chat-tab");
-                tab.addEventListener("click", () => switchChatTab(user));
-
-                tabContainer.appendChild(tab);
-            }
-            switchChatTab(user);
-        }
-
-        function switchChatTab(user) {
-            activeChat = user;
-            document.querySelectorAll(".chat-tab").forEach(tab => {
-                tab.classList.remove("active");
-                if (tab.innerText === user) {
-                    tab.classList.add("active");
-                }
-            });
-            loadMessages();
-        }
-
-        document.getElementById("everyone-tab").addEventListener("click", () => switchChatTab("Everyone"));
-
-        window.sendMessage = function () {
-            username = document.getElementById("username").value.trim();
+        function sendMessage() {
+            const username = document.getElementById("username").value.trim();
             const messageInput = document.getElementById("message");
             const message = messageInput.value.trim();
             if (username === "" || message === "") return;
 
-            localStorage.setItem("username", username);
-            setUserOnline(username);
-            push(messagesRef, { username: username, text: message, recipient: activeChat });
-
+            push(messagesRef, { username: username, text: message });
             messageInput.value = "";
-        };
+        }
 
         function loadMessages() {
             onValue(messagesRef, (snapshot) => {
@@ -231,11 +108,9 @@
 
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
-                    if (data.recipient === activeChat || data.recipient === "Everyone") {
-                        const msgElement = document.createElement("p");
-                        msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text}`;
-                        chatBox.appendChild(msgElement);
-                    }
+                    const msgElement = document.createElement("p");
+                    msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text}`;
+                    chatBox.appendChild(msgElement);
                 });
 
                 chatBox.scrollTop = chatBox.scrollHeight;
