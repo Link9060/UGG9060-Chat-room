@@ -68,6 +68,10 @@
             margin-left: 10px;
             border: 2px solid cyan;
         }
+
+        .color-picker {
+            margin: 10px;
+        }
     </style>
 </head>
 <body>
@@ -80,6 +84,9 @@
             <input type="text" id="username" placeholder="Enter your name">
             <input type="text" id="message" placeholder="Type your message">
             <button id="send-button">Send</button>
+            <br>
+            <label>Sent Messages: <input type="color" id="sentColor" class="color-picker"></label>
+            <label>Received Messages: <input type="color" id="receivedColor" class="color-picker"></label>
         </div>
         <div id="online-users">
             <h3>Online Users</h3>
@@ -111,6 +118,9 @@
         const chatBox = document.getElementById("chat-box");
         const userList = document.getElementById("user-list");
         const sendButton = document.getElementById("send-button");
+        const messageInput = document.getElementById("message");
+        const sentColorPicker = document.getElementById("sentColor");
+        const receivedColorPicker = document.getElementById("receivedColor");
 
         document.addEventListener("DOMContentLoaded", () => {
             loadMessages();
@@ -118,10 +128,14 @@
         });
 
         sendButton.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keypress", (event) => {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
 
         function sendMessage() {
             const username = usernameInput.value.trim();
-            const messageInput = document.getElementById("message");
             const message = messageInput.value.trim();
             if (username === "" || message === "") return;
 
@@ -136,32 +150,12 @@
                     const data = childSnapshot.val();
                     const msgElement = document.createElement("p");
                     msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.text}`;
+                    msgElement.style.color = data.username === usernameInput.value ? sentColorPicker.value : receivedColorPicker.value;
                     chatBox.appendChild(msgElement);
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
             });
         }
-
-        function trackOnlineUsers() {
-            const username = prompt("Enter your name:");
-            if (!username) return;
-            usernameInput.value = username;
-
-            const userRef = ref(db, `online-users/${username}`);
-            set(userRef, true);
-            onDisconnect(userRef).remove();
-
-            onValue(usersRef, (snapshot) => {
-                userList.innerHTML = "";
-                snapshot.forEach((childSnapshot) => {
-                    const user = childSnapshot.key;
-                    const userElement = document.createElement("li");
-                    userElement.textContent = user;
-                    userList.appendChild(userElement);
-                });
-            });
-        }
     </script>
-
 </body>
 </html>
