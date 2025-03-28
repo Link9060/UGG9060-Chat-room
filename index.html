@@ -79,7 +79,7 @@
         <div>
             <input type="text" id="username" placeholder="Enter your name">
             <input type="text" id="message" placeholder="Type your message">
-            <button onclick="sendMessage()">Send</button>
+            <button id="send-button">Send</button>
         </div>
         <div id="online-users">
             <h3>Online Users</h3>
@@ -110,11 +110,14 @@
         const usernameInput = document.getElementById("username");
         const chatBox = document.getElementById("chat-box");
         const userList = document.getElementById("user-list");
+        const sendButton = document.getElementById("send-button");
 
         document.addEventListener("DOMContentLoaded", () => {
             loadMessages();
             trackOnlineUsers();
         });
+
+        sendButton.addEventListener("click", sendMessage);
 
         function sendMessage() {
             const username = usernameInput.value.trim();
