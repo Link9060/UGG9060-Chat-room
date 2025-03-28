@@ -25,7 +25,7 @@
         const usersRef = ref(db, "onlineUsers");
 
         let username = localStorage.getItem("username") || "";
-        let activeChat = "Everyone";
+        let activeChat = "Everyone"; // Default chat tab
         let chatTabs = new Map();
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -50,36 +50,46 @@
                 snapshot.forEach((childSnapshot) => {
                     const user = childSnapshot.key;
                     if (user !== username) {
-                        usersBox.innerHTML += `<button class='user-button' id="user-${user}" onclick="openChatTab('${user}')">${user}</button>`;
+                        // Fix: Use event listener instead of inline onclick
+                        const userButton = document.createElement("button");
+                        userButton.classList.add("user-button");
+                        userButton.innerText = user;
+                        userButton.addEventListener("click", () => openChatTab(user));
+                        usersBox.appendChild(userButton);
                     }
                 });
             });
         }
 
         function openChatTab(user) {
-            console.log(`Opening chat for: ${user}`); // Debugging
+            console.log(`Opening chat tab for: ${user}`); // Debugging log
             if (!chatTabs.has(user)) {
                 chatTabs.set(user, []);
                 const tabContainer = document.getElementById("chat-tabs");
+
                 const tab = document.createElement("button");
                 tab.innerText = user;
                 tab.classList.add("chat-tab");
-                tab.onclick = () => switchChatTab(user);
+                tab.addEventListener("click", () => switchChatTab(user));
+
                 tabContainer.appendChild(tab);
             }
             switchChatTab(user);
         }
 
         function switchChatTab(user) {
-            console.log(`Switching to chat tab: ${user}`); // Debugging
+            console.log(`Switching to chat tab: ${user}`); // Debugging log
             activeChat = user;
             document.getElementById("selected-recipient").innerText = `Messaging: ${user}`;
+            
+            // Fix: Use forEach to correctly loop and highlight active tab
             document.querySelectorAll(".chat-tab").forEach(tab => {
                 tab.classList.remove("active");
                 if (tab.innerText === user) {
                     tab.classList.add("active");
                 }
             });
+
             loadMessages();
         }
 
@@ -99,7 +109,7 @@
         function loadMessages() {
             onValue(messagesRef, (snapshot) => {
                 const chatBox = document.getElementById("chat-box");
-                chatBox.innerHTML = "";
+                chatBox.innerHTML = ""; // Clear chat box before loading new messages
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
                     if (data.recipient === activeChat || data.recipient === "Everyone" || data.username === username) {
